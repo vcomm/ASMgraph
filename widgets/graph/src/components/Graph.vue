@@ -18,13 +18,22 @@
             @click="showModal('Trans')"
         ><i class="fas fa-exchange-alt"></i> Trans</button>
         <div class="dropdown">
-            <button class="btn">[ More ] 
+            <button class="btn">[ <b ref="more">Paper</b> ] 
                 <i class="fa fa-caret-down"></i>
             </button>
             <div class="dropdown-content">
-                <a href="#">Link 1</a>
-                <a href="#">Link 2</a>
-                <a href="#" @click="showDAFSM()">DAFSM</a>
+                <a href="#" class="paper" @click="showModal('State')"><i class="fas fa-project-diagram"></i>   new State</a>
+                <a href="#" class="paper" @click="showModal('Trans')"><i class="fas fa-exchange-alt"></i>   new Trans</a>
+                <a href="#" class="paper" @click="showDAFSM()"><i class="fas fa-list"></i> show DAFSM</a>
+
+                <a href="#" class="state" style="display:none" @click="sellRemove()"><i class="fas fa-trash"></i>   del State</a>
+                <a href="#" class="state init" style="display:none" @click="showModal('Action','entries')"><i class="fas fa-sign-in-alt"></i>   add Entry</a>
+                <a href="#" class="state final" style="display:none" @click="showModal('Action','exits')"><i class="fas fa-sign-out-alt"></i>   add Exit</a>
+                <a href="#" class="state init final" style="display:none" @click="showModal('Action','stays')"><i class="fas fa-recycle"></i>   add Stay</a>
+
+                <a class="trans" href="#" style="display:none" @click="sellRemove()"><i class="fas fa-trash"></i>   del Trans</a>
+                <a class="trans" href="#" style="display:none" @click="showModal('Action','triggers')"><i class="fas fa-bolt"></i>   add Trigger</a>
+                <a class="trans" href="#" style="display:none" @click="showModal('Action','effects')"><i class="fab fa-buffer"></i>   add Effect</a>
             </div>
         </div> 
     </nav>
@@ -39,7 +48,7 @@
         >&times;</span>
     
       <div id="State" ref="State" style="display:none">
-        <input autofocus="autofocus" class="modal-enter" id="stateName" ref="stateName" placeholder="choose a state name" type="text">
+        <input autofocus="autofocus" class="modal-enter" id="stateName" ref="stateName" v-bind:placeholder="[stateType === 'initialState' ? 'init' : stateType === 'finalState' ? 'final' : 'choose a state name']" type="text">
         <button id="confirmState" class="modal-enter"
             @click="newState()"
         >Confirm</button> 
@@ -50,7 +59,7 @@
       </div>
     
       <div id="Trans" ref="Trans" style="display:none">  
-        <input autofocus="autofocus" class="modal-enter" ref="transName" v-bind:placeholder="`T:${transSrc}=>${transDst}`" type="text"><p/>
+        <input autofocus="autofocus" class="modal-enter" ref="transName" v-bind:placeholder="`${transSrc}=>T=>${transDst}`" type="text" disabled><p/>
         <label style="margin-left: -100px;"><b>Transition Src: </b></label>      
         <select id="fromState" v-model="transSrc" class="modal-enter">
             <option v-bind:key="option.id" 
@@ -71,6 +80,13 @@
             @click="newTrans()"
         >Confirm</button>
       </div>
+
+      <div id="Action" ref="Action" style="display:none">
+        <input autofocus="autofocus" class="modal-enter" id="actionName" ref="actionName" placeholder="choose a action name" type="text">
+        <button id="confirmAction" class="modal-enter"
+            @click="newAction()"
+        >Confirm</button>          
+      </div>    
   
       </div>
     </div>
@@ -171,16 +187,18 @@ export default /*class umlFsm extends jsonFSA*/ {
             });
             self.selected  = cellView.model;
             if (self.selected.fsa.type === 'state') {
+                this.$refs.more.innerText = 'State'
                 self.showhide(['.state'],['.paper','.trans'])
                 if (self.selected.fsa.item.pattern.key === 'init')
                     self.showhide([],['.init'])
                 if (self.selected.fsa.item.pattern.key === 'final')
                     self.showhide([],['.final'])
             } else if (self.selected.fsa.type === 'trans') {
+                this.$refs.more.innerText = 'Trans'
                 self.showhide(['.trans'],['.paper','.state'])
-            } else
+            } else {
                 self.showhide([],['.paper','.state','.trans'])    
-
+            }
             console.log('selected '+self.selected.fsa.type,self.selected.fsa.item)
             //$('code#selectedItem').text(self.selected.fsa.item.pattern.key)
         });
@@ -194,6 +212,7 @@ export default /*class umlFsm extends jsonFSA*/ {
                 self.selected  = null;
                 self.showhide(['.paper'],['.state','.trans'])
                 console.log('Reset All')
+                this.$refs.more.innerText = 'Paper'
                 //$('code#selectedItem').text('Not Selected')
             }
         });
@@ -249,23 +268,31 @@ export default /*class umlFsm extends jsonFSA*/ {
         },
         showhide(showlist,hidelist) {
             showlist.forEach(function(item, i, arr) {
-                //$(item).css({display :'block'});
+                const elems = document.querySelectorAll(item)
+                for ( i = 0; i < elems.length; i++)
+                      elems[i].style.display = "block";
             });    
             hidelist.forEach(function(item, i, arr) {
-                //$(item).css({display :'none'});
+                const elems = document.querySelectorAll(item)
+                for ( i = 0; i < elems.length; i++)
+                      elems[i].style.display = "none";
             });            
         },
         showDAFSM() {
-            console.log('DAFSM:',this.fsaJSON.get())
+            console.log('DAFSM:',this.fsaJSON.get());
+            const dafsm = window.open("_blank");
+            dafsm.document.write(JSON.stringify(this.fsaJSON.get()));
         },
-        showModal(elem) {
+        showModal(elem,actiontype) {
             this.$refs.dialog.style.display = "block"
             this.$refs[elem].style.display = "block"
+            this.actionType = actiontype
             this.updateStateList()
         },
         hideModal() {
             this.$refs['State'].style.display = "none"
             this.$refs['Trans'].style.display = "none"
+            this.$refs['Action'].style.display = "none"
             this.$refs.dialog.style.display = "none"
         },
         updateStateList() {
@@ -277,10 +304,18 @@ export default /*class umlFsm extends jsonFSA*/ {
                 this.dstOptions.push({id: s, text:s, value:s});
             }
         },
+        newAction() {
+            const actionName = this.$refs.actionName.value;
+
+            this.addAction(this.actionType,actionName)
+            this.hideModal()
+        },
         newState() {
             const type = this.stateType;
-            const stateName = this.$refs.stateName.value; 
-                
+//            const stateName = this.$refs.stateName.value; 
+            const stateName = (this.stateType === 'initialState') ? 'init' : 
+                              (this.stateType === 'finalState') ? 'final' : this.$refs.stateName.value;    
+
             console.log(`New State: ${stateName} [${type}]`)    
             if (this.fsaJSON.get().states[stateName]) {
                 this.$refs.stateName.value = ''
@@ -309,7 +344,7 @@ export default /*class umlFsm extends jsonFSA*/ {
                             }
                         }
                     });
-                    fsaState = this.fsaJSON.addstate('init',stateName,type)
+                    fsaState = this.fsaJSON.addstate('init','init'/*stateName*/,type)
                     fsa['states']['init'] = fsaState.pattern
                     break;
                 case 'finalState':
@@ -326,7 +361,7 @@ export default /*class umlFsm extends jsonFSA*/ {
                             }
                         }
                     });
-                    fsaState = this.fsaJSON.addstate('final',stateName,type)
+                    fsaState = this.fsaJSON.addstate('final','final'/*stateName*/,type)
                     fsa['states']['final'] = fsaState.pattern
                     break;
                 default:
@@ -379,7 +414,7 @@ export default /*class umlFsm extends jsonFSA*/ {
         makeTrans(src,dst) {
             let uml = this.uml
             let fsa = this.fsaJSON.get() 
-            const transName = `T:${src}=>${dst}`
+            const transName = `${src}=>T=>${dst}`
             const srcState = fsa.states[src]
             const dstState = fsa.states[dst]
             const label = transName
@@ -419,7 +454,7 @@ export default /*class umlFsm extends jsonFSA*/ {
                 srcState.model.attributes.attrs['.uml-state-body'].stroke, label)
             */
             let fsaTrans = srcState.model.fsa.item.addtrans(transName,dstState.key)
-            fsa['states'][src]['transitions'].push(fsaTrans.pattern)
+            //fsa['states'][src]['transitions'].push(fsaTrans.pattern)
             fsaTrans.get().model = trans
             trans.fsa = { type: 'trans', item: fsaTrans, owner: srcState.model.fsa.item}
             this.graph.addCell(trans);
@@ -434,35 +469,38 @@ export default /*class umlFsm extends jsonFSA*/ {
                     let events = this.selected.get('events')
                     switch (type) {
                         case 'entries':
-                            let entries = JSON.parse(events[0])
-                            entries.entries++
-                            this.selected.set('events', [JSON.stringify(entries),events[1],events[2]])
-                            //this.statesDict[item.name].addentry(actname,actfunc)
-                            objItem.addentry(actname,actfunc)
+                            if (events) {
+                                let entries = JSON.parse(events[0])
+                                entries.entries++
+                                this.selected.set('events', [JSON.stringify(entries),events[1],events[2]])
+                            }
+                            objItem.addentry(actname,actfunc || 'return')
                             break;
                         case 'stays':
-                            let stays = JSON.parse(events[1])
-                            stays.stays++
-                            this.selected.set('events', [events[0],JSON.stringify(stays),events[2]])
-                            //this.statesDict[item.name].addstay(actname,actfunc)
-                            objItem.addstay(actname,actfunc)
+                            if (events) {
+                                let stays = JSON.parse(events[1])
+                                stays.stays++
+                                this.selected.set('events', [events[0],JSON.stringify(stays),events[2]])
+                            }
+                            objItem.addstay(actname,actfunc || 'return')
                             break;
                         case 'exits':
-                            let exits = JSON.parse(events[2])
-                            exits.exits++
-                            this.selected.set('events', [events[0],events[1],JSON.stringify(exits)])  
-                            //this.statesDict[item.name].addexit(actname,actfunc)    
-                            objItem.addexit(actname,actfunc)           
+                            if (events) {
+                                let exits = JSON.parse(events[2])
+                                exits.exits++
+                                this.selected.set('events', [events[0],events[1],JSON.stringify(exits)])   
+                            }  
+                            objItem.addexit(actname,actfunc || 'return')           
                             break;    
                     } 
                     break;
                 case 'trans':
                     switch (type) {
                         case 'triggers':
-                            objItem.addtrigger(actname,actfunc)
+                            objItem.addtrigger(actname,actfunc || 'return true')
                             break;
                         case 'effects':
-                            objItem.addeffect(actname,actfunc)
+                            objItem.addeffect(actname,actfunc || 'return')
                             break;    
                     }
                     break; 
