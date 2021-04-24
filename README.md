@@ -37,8 +37,8 @@ In a state transition diagram, if no two outgoing edges of a state have the same
 ` npm start ` 
 
 ### Build State Chart diagram 
-
-<img src="img/UMLgraph.png">
+ 
+see: https://github.com/vcomm/ASMgraph#readme
 
 ## JSON output format
 
