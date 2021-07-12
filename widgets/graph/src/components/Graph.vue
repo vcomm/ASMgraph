@@ -59,7 +59,7 @@
       </div>
     
       <div id="Trans" ref="Trans" style="display:none">  
-        <input autofocus="autofocus" class="modal-enter" ref="transName" v-bind:placeholder="`${transSrc}=>T=>${transDst}`" type="text" disabled><p/>
+        <input autofocus="autofocus" class="modal-enter" ref="transName" v-bind:placeholder="`${transSrc}=>T=>${transDst}`" type="text"><p/>
         <label style="margin-left: -100px;"><b>Transition Src: </b></label>      
         <select id="fromState" v-model="transSrc" class="modal-enter">
             <option v-bind:key="option.id" 
@@ -396,25 +396,29 @@ export default /*class umlFsm extends jsonFSA*/ {
             console.log(`${stateName}[${state.id}]`,state)   
         },
         newTrans() {
+            let vertices = undefined
             if (!this.transSrc || !this.transDst) {
                 this.$refs.transName.value = ''
                 this.$refs.transName.setAttribute('placeholder', "please select transition source & destination") 
                 console.log("please fill all fields and select side");
                 return;
             } else if (this.transSrc === this.transDst) {
+                vertices = [{"x": 513,"y": 309},{"x": 637,"y": 308},{"x": 636,"y": 221}]
+                /*
                 this.$refs.transName.value = ''
                 this.$refs.transName.setAttribute('placeholder', "Wrong: selected src and dst is same state, please select one other and after change trans dst") 
                 console.log("selected src and dst is same state, please select one other and after change trans dst");
-                return;            
+                return;   
+                */         
             }
                 
-            this.makeTrans(this.transSrc,this.transDst)
+            this.makeTrans(this.transSrc,this.transDst,this.$refs.transName.value,vertices)
             this.hideModal()
         },
-        makeTrans(src,dst) {
+        makeTrans(src,dst,name,vertices) {
             let uml = this.uml
             let fsa = this.fsaJSON.get() 
-            const transName = `${src}=>T=>${dst}`
+            const transName = name || `${src}=>T=>${dst}`
             const srcState = fsa.states[src]
             const dstState = fsa.states[dst]
             const label = transName
@@ -447,7 +451,8 @@ export default /*class umlFsm extends jsonFSA*/ {
                             fontWeight: 'bold'
                         }
                     }
-                }]            
+                }],
+                vertices: vertices || []            
             });     
             /*
             let trans = this.transLink(srcState.model, dstState.model, 
