@@ -11,6 +11,15 @@
                 <a href="#" @click="saveGraph()"><i class="fas fa-save"></i> Save</a>
             </div>
         </div> 
+        <div class="dropdown">
+            <button class="btn">[ Build ] 
+                <i class="fa fa-caret-down"></i>
+            </button>
+            <div class="dropdown-content">
+                <a href="#" @click=";"><i class="fas fa-code"></i> Execute JSON</a>
+                <a href="#" @click=";"><i class="fab fa-node-js"></i> Code Template</a>
+            </div>
+        </div>
         <button class="btn"
             @click="showModal('State')"
         ><i class="fas fa-project-diagram"></i> State</button>
@@ -56,10 +65,14 @@
         <input type="radio" name="stateType" value="initialState" v-model="stateType">Start
         <input type="radio" name="stateType" value="finalState" v-model="stateType">End
         <input type="radio" name="stateType" value="regularState" v-model="stateType" checked>Regular
+        <span @click="selColor()" style="margin-left:70px;"><i class="fas fa-palette fa-2x" style="color:red;" ref="palette" title="click for change color"></i></span>
       </div>
     
       <div id="Trans" ref="Trans" style="display:none">  
+        <label style="margin-left: -100px;"><b>Trigger Name: </b></label> 
         <input autofocus="autofocus" class="modal-enter" ref="transName" v-bind:placeholder="`${transSrc}=>T=>${transDst}`" type="text"><p/>
+        <label style="margin-left: -100px;"><b>Effect Name: </b></label> 
+        <input autofocus="autofocus" class="modal-enter" ref="effectName" type="text"><p/>
         <label style="margin-left: -100px;"><b>Transition Src: </b></label>      
         <select id="fromState" v-model="transSrc" class="modal-enter">
             <option v-bind:key="option.id" 
@@ -171,7 +184,17 @@ export default /*class umlFsm extends jsonFSA*/ {
             height: this.$refs.joint.clientHeight,
             gridSize: 1,
             model: this.graph,
-            cellViewNamespace: joint.shapes
+            cellViewNamespace: joint.shapes,
+            snapLabels: true,
+            interactive: {
+                linkMove: true,
+                labelMove: true,
+                arrowheadMove: true,
+                vertexMove: true,
+                vertexAdd: true,
+                vertexRemove: true,
+                useLinkTools: true
+            }
         });       
 
         this.paper.on('cell:pointerdown',(cellView)=>{
@@ -236,6 +259,11 @@ export default /*class umlFsm extends jsonFSA*/ {
     },
 
     methods: { 
+        selColor() {
+            const color = this.fsaJSON.genColor()
+            console.log(`Color:`,color)
+            this.$refs.palette.style.color = color
+        },
         newGraph() {
             this.graph.clear(); 
             this.fsaJSON.reset();
@@ -365,7 +393,7 @@ export default /*class umlFsm extends jsonFSA*/ {
                     fsa['states']['final'] = fsaState.pattern
                     break;
                 default:
-                    const color = this.fsaJSON.genColor()
+                    const color = this.$refs.palette.style.color //this.fsaJSON.genColor()
                     state = new uml.State({
                         position: { x:500+delta, y:50+delta },
                         size: { width: 150, height: 80 },
@@ -411,17 +439,18 @@ export default /*class umlFsm extends jsonFSA*/ {
                 return;   
                 */         
             }
-                
-            this.makeTrans(this.transSrc,this.transDst,this.$refs.transName.value,vertices)
+            const trigger = this.$refs.transName.value
+            const effect  = this.$refs.effectName.value
+            this.makeTrans(this.transSrc,this.transDst,trigger,effect,vertices)
             this.hideModal()
         },
-        makeTrans(src,dst,name,vertices) {
+        makeTrans(src,dst,event,output,vertices) {
             let uml = this.uml
             let fsa = this.fsaJSON.get() 
-            const transName = name || `${src}=>T=>${dst}`
+            const transName = `${src}=>T=>${dst}`
             const srcState = fsa.states[src]
             const dstState = fsa.states[dst]
-            const label = transName
+            const label = event ? `${event}/${output}` : transName
             
             let trans = new uml.Transition({
                 source: { id: srcState.model.id },
@@ -459,7 +488,8 @@ export default /*class umlFsm extends jsonFSA*/ {
                 srcState.model.attributes.attrs['.uml-state-body'].stroke, label)
             */
             let fsaTrans = srcState.model.fsa.item.addtrans(transName,dstState.key)
-            //fsa['states'][src]['transitions'].push(fsaTrans.pattern)
+            if (event) fsaTrans.addtrigger(event,'')
+            if (output) fsaTrans.addeffect(output,'')
             fsaTrans.get().model = trans
             trans.fsa = { type: 'trans', item: fsaTrans, owner: srcState.model.fsa.item}
             this.graph.addCell(trans);

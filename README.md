@@ -29,16 +29,21 @@ In a state transition diagram, if no two outgoing edges of a state have the same
 
 ` npm install @vcomm/asmgraph `
 
-### Build
+### Run
 
-` cd @vcomm/asmgraph/widgets/graph `
-` npm run build `
 ` cd @vcomm/asmgraph `
+
+Start application
+
 ` npm start ` 
 
-### Build State Chart diagram 
+### Rebuild
 
-see: https://github.com/vcomm/ASMgraph#readme
+` cd @vcomm/asmgraph/widgets/graph `
+
+Change UI and rebuild
+
+` npm run build `
 
 <img src="img/UMLgraph.png">
 
