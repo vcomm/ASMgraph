@@ -1,21 +1,23 @@
 {
-    "name": "@vcomm/asmgraph",
-    "version": "1.0.5",
-    "description": "State Diagram Notation (Graph)",
-    "main": "server/index.js",
-    "scripts": {
-      "start": "node server/index.js"
-    },
-    "keywords": [
-      "fsm",
-      "graph",
-      "mealy",
-      "moore",
-      "deterministic"
-    ],
-    "author": "Yakov Liskoff",
-    "license": "MIT",
-    "dependencies": {
-        "express": "^4.17.1"
-    }
+  "name": "@vcomm/asmgraph",
+  "version": "1.0.5",
+  "description": "State Diagram Notation (Graph)",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "nodemon server/index.js"
+  },
+  "keywords": [
+    "fsm",
+    "graph",
+    "mealy",
+    "moore",
+    "deterministic"
+  ],
+  "author": "Yakov Liskoff",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "swagger-ui-express": "^4.1.6"
   }
+}

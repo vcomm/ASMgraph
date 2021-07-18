@@ -1,0 +1,94 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "Finite State Machine Tools",
+        "description": "Finite State Machine Diagram"
+    },
+    "paths": {
+        "/code/json/{suid}": {
+            "post": {
+                "summary": "Generate Executable JSON",
+                "operationId": "generator",
+                "tags": [
+                    "code generator"
+                ],
+                "parameters": [
+                    {
+                        "name": "suid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "DAFSM JSON",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                          "schema": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Executable JSON",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/code/nodejs/{suid}": {
+            "post": {
+                "summary": "Generate nodejs code template",
+                "operationId": "generator",
+                "tags": [
+                    "code generator"
+                ],
+                "parameters": [
+                    {
+                        "name": "suid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "DAFSM JSON",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                          "schema": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Code Template",
+                        "content": {
+                            "application/javascript": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }                                            
+    }
+}

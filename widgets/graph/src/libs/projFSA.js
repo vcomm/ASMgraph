@@ -18,8 +18,9 @@ export default class projFSA {
           console.log(reader.error);
         };
     }
-    save(context) {
-        const file = new File([context],`${this._prjname_}.${this._extension_}`,{type: "text/plain;charset=utf-8"});
+    save(context,filename) {
+        const fname = filename || `${this._prjname_}.${this._extension_}`
+        const file = new File([context],fname,{type: "text/plain;charset=utf-8"});
         FileSaver.saveAs(file);          
     }
 }

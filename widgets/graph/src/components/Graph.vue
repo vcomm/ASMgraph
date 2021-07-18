@@ -16,8 +16,8 @@
                 <i class="fa fa-caret-down"></i>
             </button>
             <div class="dropdown-content">
-                <a href="#" @click=";"><i class="fas fa-code"></i> Execute JSON</a>
-                <a href="#" @click=";"><i class="fab fa-node-js"></i> Code Template</a>
+                <a href="#" @click="execJSON()"><i class="fas fa-code"></i> Execute JSON</a>
+                <a href="#" @click="nodejsCODE()"><i class="fab fa-node-js"></i> Code Template</a>
             </div>
         </div>
         <button class="btn"
@@ -259,10 +259,39 @@ export default /*class umlFsm extends jsonFSA*/ {
     },
 
     methods: { 
+        async execJSON() {
+            const suid = 'test'
+            const response = await fetch(`/code/json/${suid}`,{
+                method: 'POST',      
+                headers: {
+                'Content-Type': 'application/json'
+                },     
+                body: JSON.stringify(this.fsaJSON.get())     
+            })
+            const data = await response.json()
+            console.log(`Execute JSON:`,data)
+            this.fsaPROJ.save(JSON.stringify(data),'exec.json')
+        },
+        async nodejsCODE() {
+            const suid = 'test'
+            const response = await fetch(`/code/nodejs/${suid}`,{
+                method: 'POST',      
+                headers: {
+                'Content-Type': 'application/json'
+                },     
+                body: JSON.stringify(this.fsaJSON.get())     
+            })
+            const data = await response.text()
+            console.log(`Node.js code template:`,data)
+            this.fsaPROJ.save(JSON.stringify(data),'code.js')
+        },
         selColor() {
             const color = this.fsaJSON.genColor()
             console.log(`Color:`,color)
             this.$refs.palette.style.color = color
+        },
+        genColor() {
+            return this.fsaJSON.genColor()
         },
         newGraph() {
             this.graph.clear(); 
@@ -447,7 +476,7 @@ export default /*class umlFsm extends jsonFSA*/ {
         makeTrans(src,dst,event,output,vertices) {
             let uml = this.uml
             let fsa = this.fsaJSON.get() 
-            const transName = `${src}=>T=>${dst}`
+            const transName = `${src}=>[${event}/${output}]=>${dst}`
             const srcState = fsa.states[src]
             const dstState = fsa.states[dst]
             const label = event ? `${event}/${output}` : transName
@@ -612,6 +641,7 @@ export default /*class umlFsm extends jsonFSA*/ {
             trans.fsa = { type: 'trans', item: fsaTrans, owner: srcState}
             console.log(`Restore Trans: `, model)
             this.graph.addCell(trans) 
+            return fsaTrans
         },
         restoreGraph(states) {
             if (states instanceof Object) {
@@ -622,12 +652,20 @@ export default /*class umlFsm extends jsonFSA*/ {
                 for (let [key, state] of Object.entries(states)) {
                     if (state && state.hasOwnProperty("transitions")) {
                         state.transitions.forEach(trans => {
-                            if (trans.hasOwnProperty("model"))
+                            const srcState = this.fsaJSON.statesDict[state.key]
+                            const fsaTrans = srcState.addtrans(trans.key,trans.nextstatename,trans)
+                            if (trans.hasOwnProperty("model")) {
+                                const modelTrans = new this.uml.Transition(trans.model)
+                                modelTrans.fsa = { type: 'trans', item: fsaTrans, owner: srcState}
+                                this.graph.addCell(modelTrans) 
+                            }
+                            /*
                                 this.restoreTrans(
                                     trans.model,
                                     this.fsaJSON.statesDict[state.key],
                                     trans.nextstatename,
                                     trans.key)
+                            */
                         })                        
                     } 
                 } 

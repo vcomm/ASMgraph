@@ -92,9 +92,9 @@ export class jsonState {
             return action  
         } else return null     
     }    
-    addtrans(name,nextstate) {
+    addtrans(name,nextstate,transition) {
         if (this.pattern.hasOwnProperty("transitions")) {
-            let trans = new jsonTrans(name,nextstate)
+            let trans = new jsonTrans(name,nextstate,transition)
             this.pattern.transitions.push(trans.get())  
             this.transDict[name] = trans 
             return trans    
