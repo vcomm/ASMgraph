@@ -30,9 +30,12 @@ module.exports = {
                 '    return (currState && currState.transitions[ev]) ?'+
                 '            currState.transitions[ev] : null;'+
                 '}'+
-                'eventProcessing(ev) {'+
-                '    const ev = this.eventAcceptor(ev);'+
-                '    return (ev && ev.output) ? this.emitEvent(ev.output,this.content) : null;'+
+                'eventProcessing(event) {'+
+                '    const ev  = this.eventAcceptor(event);'+
+                '    if(ev) {'+
+                '       ev.output ? this.emitEvent(ev.output,this.content) : null;'+
+                '       ev.nextstatename ? this.content.setState(ev.nextstatename) : null;'+
+                '    }'+
                 '}'     
             
             for (let [key, state] of Object.entries(logic['states'])) {
