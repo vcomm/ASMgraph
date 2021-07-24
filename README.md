@@ -42,7 +42,7 @@ Start application
 
 ` npm start `
 
-<img src="https://ibb.co/9VypbL4">
+<img src="https://i.ibb.co/8dPmrpx/graph-demo.png">
 
 ## Example: Generated Executable JSON
 
