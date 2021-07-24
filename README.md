@@ -42,7 +42,7 @@ Start application
 
 ` npm start `
 
-<img src="img/UMLgraph.png">
+<img src="https://ibb.co/9VypbL4">
 
 ## Example: Generated Executable JSON
 
@@ -89,9 +89,11 @@ Start application
 ```javascript
 const { aChainEngine } = require('@vcomm/asynchain');
 const fsmLogic = require('./exec.json');
+
 class serviceContent {
     constructor(initState) {
         this.state = initState;
+        this.locked = false;
     }
     setState(state) {
         this.state = state;
@@ -99,31 +101,93 @@ class serviceContent {
     getState() {
         return this.state;
     }
+    setNextState(nextState) {
+        this.nextState = nextState;
+    }
+    getNextSate() {
+        return this.nextState;
+    }
+    lock() {
+        this.locked = true;
+    }
+    unlock() {
+        this.locked = false;
+    }
+    isLocked() {
+        return this.locked;
+    }
 }
+
 class serviceManager extends aChainEngine {
     constructor() {
         super();
         this.content = new serviceContent(fsmLogic.states.init.key);
         this.initFSM();
     }
-    eventAcceptor(ev) {
-        const currState = fsmLogic.states[this.content.getState()];
-        return (currState && currState.transitions[ev]) ? currState.transitions[ev] : null;
+    eventProcessing(input, content) {
+        const cntx = content || this.content;
+        if (cntx.isLocked()) {
+            return Promise.reject(`Warning: Transition input[${input}] - content is locked`)
+            .catch(error => {
+                console.error(error);
+            })
+        } else {
+            cntx.lock();
+            return new Promise((resolve, reject) => {
+                const trans = this.inputProcessing(input, cntx);
+                if (trans) {
+                    console.log(`Transition:`, trans);
+                    resolve(trans);
+                } else {
+                    reject(`Error: Wrong transition input[${input}] for current state`);
+                }
+            }).then(trans => {
+                cntx.setNextState(trans.nextstate);
+                this.emitEvent(trans.output, cntx);
+                return trans.nextstate;
+            }).catch(error => {
+                console.error(error);
+            })
+        }
     }
-    eventProcessing(ev) {
-        const ev = this.eventAcceptor(ev);
-        return (ev && ev.output) ? this.emitEvent(ev.output, this.content) : null;
+    inputProcessing(input, cntx) {
+        console.log(`Incoming input:`, input);
+        const currState = fsmLogic.states[cntx.getState()];
+        const trans = (currState && currState.transitions) ? currState.transitions : null;
+        if (!trans) return null;
+        for (let [key, tran] of Object.entries(trans)) {
+            if (tran.input === input) {
+                return {
+                    output: tran.output,
+                    nextstate: tran.nextstatename
+                };
+            }
+        }
+        return null;
     }
     initFSM() {
         this.emitOn('efConfig', [
-            // your functions list
+            (cntx) => cntx.setState(cntx.getNextSate()), 
+            (cntx) => cntx.unlock()
         ], this.content);
         this.emitOn('efReport', [
-            // your functions list
+            (cntx) => cntx.setState(cntx.getNextSate()), 
+            (cntx) => cntx.unlock()
         ], this.content);
         this.emitOn('efRequest', [
-            // your functions list
+            (cntx) => cntx.setState(cntx.getNextSate()), 
+            (cntx) => cntx.unlock()
         ], this.content);
     }
 }
 ```
+## Example: Using
+
+```javascript
+const mng = new serviceManager()
+mng.eventProcessing('evCheck')   // build in internal content
+mng.eventProcessing('evComplete',new serviceContent('wait')) // external content
+```
+
+## Debug in REPL.it 
+https://repl.it/@YakovLiskoff/ASMtest?lite=true
