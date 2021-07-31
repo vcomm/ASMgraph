@@ -1,0 +1,1 @@
+docker run --name asmgraph -p 5050:5050 -d --rm vcomm/asmgraph

@@ -33,7 +33,8 @@
             <div class="dropdown-content">
                 <a href="#" class="paper" @click="showModal('State')"><i class="fas fa-project-diagram"></i>   new State</a>
                 <a href="#" class="paper" @click="showModal('Trans')"><i class="fas fa-exchange-alt"></i>   new Trans</a>
-                <a href="#" class="paper" @click="showDAFSM()"><i class="fas fa-list"></i> show DAFSM</a>
+                <a href="#" class="paper" @click="graphExport()"><i class="fas fa-list"></i> Export Graph</a>
+                <!--<a href="#" class="paper" @click="showDAFSM()"><i class="fas fa-list"></i> show DAFSM</a>-->
 
                 <a href="#" class="state" style="display:none" @click="sellRemove()"><i class="fas fa-trash"></i>   del State</a>
                 <a href="#" class="state init" style="display:none" @click="showModal('Action','entries')"><i class="fas fa-sign-in-alt"></i>   add Entry</a>
@@ -259,6 +260,9 @@ export default /*class umlFsm extends jsonFSA*/ {
     },
 
     methods: { 
+        async graphExport() {
+
+        },
         async execJSON() {
             const suid = 'test'
             const response = await fetch(`/code/json/${suid}`,{
@@ -283,7 +287,7 @@ export default /*class umlFsm extends jsonFSA*/ {
             })
             const data = await response.text()
             console.log(`Node.js code template:`,data)
-            this.fsaPROJ.save(JSON.stringify(data),'code.js')
+            this.fsaPROJ.save(data,'code.js')
         },
         selColor() {
             const color = this.fsaJSON.genColor()

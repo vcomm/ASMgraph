@@ -25,6 +25,10 @@ While the state transition function S is same for both states machine, the outpu
 
 In a state transition diagram, if no two outgoing edges of a state have the same label, then the corresponding machine is called a deterministic finite state machine …if two or more outgoing edges of a state have the same label, then it is called a non-deterministic finite state machine.
 
+## Start docker instance
+
+`docker run --name asmgraph -p 5050:5050 -d --rm vcomm/asmgraph:latest`
+
 ### Install
 
 ` npm install @vcomm/asmgraph `
