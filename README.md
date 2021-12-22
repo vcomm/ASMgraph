@@ -31,11 +31,12 @@ In a state transition diagram, if no two outgoing edges of a state have the same
 
 ### Install
 
-` npm install @vcomm/asmgraph `
+` npm install `
  
 ### Build
 
-` cd @vcomm/asmgraph/widgets/graph `
+` cd widgets/graph `
+` npm install `
 ` npm run build `
 
 ### Run
@@ -54,6 +55,7 @@ Start application
 {
     "id": "tst",
     "prj": "prj",
+    "type": "manual",
     "states": {
         "init": {
             "key": "init",
@@ -91,106 +93,64 @@ Start application
 ## Example: Generated Node.js code template
 
 ```javascript
-const { aChainEngine } = require('@vcomm/asynchain');
-const fsmLogic = require('./exec.json');
+const fsmLogic = require('./manual.json');
+const { serviceContent, serviceDeploy } = require('@vcomm/asmcore');
 
-class serviceContent {
-    constructor(initState) {
-        this.state = initState;
-        this.locked = false;
-    }
-    setState(state) {
-        this.state = state;
-    }
-    getState() {
-        return this.state;
-    }
-    setNextState(nextState) {
-        this.nextState = nextState;
-    }
-    getNextSate() {
-        return this.nextState;
-    }
-    lock() {
-        this.locked = true;
-    }
-    unlock() {
-        this.locked = false;
-    }
-    isLocked() {
-        return this.locked;
-    }
-}
-
-class serviceManager extends aChainEngine {
+class serviceManager extends serviceDeploy {
     constructor() {
         super();
-        this.content = new serviceContent(fsmLogic.states.init.key);
-        this.initFSM();
     }
-    eventProcessing(input, content) {
-        const cntx = content || this.content;
-        if (cntx.isLocked()) {
-            return Promise.reject(`Warning: Transition input[${input}] - content is locked`)
-            .catch(error => {
-                console.error(error);
-            })
-        } else {
-            cntx.lock();
-            return new Promise((resolve, reject) => {
-                const trans = this.inputProcessing(input, cntx);
-                if (trans) {
-                    console.log(`Transition:`, trans);
-                    resolve(trans);
-                } else {
-                    reject(`Error: Wrong transition input[${input}] for current state`);
-                }
-            }).then(trans => {
-                cntx.setNextState(trans.nextstate);
-                this.emitEvent(trans.output, cntx);
-                return trans.nextstate;
-            }).catch(error => {
-                console.error(error);
-            })
-        }
-    }
-    inputProcessing(input, cntx) {
-        console.log(`Incoming input:`, input);
-        const currState = fsmLogic.states[cntx.getState()];
-        const trans = (currState && currState.transitions) ? currState.transitions : null;
-        if (!trans) return null;
-        for (let [key, tran] of Object.entries(trans)) {
-            if (tran.input === input) {
-                return {
-                    output: tran.output,
-                    nextstate: tran.nextstatename
-                };
-            }
-        }
-        return null;
-    }
-    initFSM() {
+    initLogic() {  // You have to implement the method 
         this.emitOn('efConfig', [
-            (cntx) => cntx.setState(cntx.getNextSate()), 
-            (cntx) => cntx.unlock()
-        ], this.content);
+          (cntx)=>console.log('efConfig'),
+          async (cntx)=>{
+              return new Promise(resolve => {
+                  setTimeout(() => resolve(cntx), 3000)
+              })
+              .then(data => {
+                  console.log(`: Run async func: Anominus 1`);
+              }) 
+          },
+          (cntx)=>cntx.setState(cntx.getNextSate()),
+          (cntx)=>cntx.unlock()
+        ], {});
         this.emitOn('efReport', [
-            (cntx) => cntx.setState(cntx.getNextSate()), 
-            (cntx) => cntx.unlock()
-        ], this.content);
+          (cntx)=>console.log('efReport'),
+          (cntx)=>cntx.setState(cntx.getNextSate()),
+          (cntx)=>cntx.unlock()
+        ], {});
         this.emitOn('efRequest', [
-            (cntx) => cntx.setState(cntx.getNextSate()), 
-            (cntx) => cntx.unlock()
-        ], this.content);
+          (cntx)=>console.log('efRequest'),
+          async (cntx)=>{
+            const promise = new Promise((resolve,reject) => {
+                setTimeout(() => resolve(cntx), 1000)
+            })
+            const data = await promise
+            console.log(`: Run async func: Anominus 2`); 
+          },
+          (cntx)=>cntx.setState(cntx.getNextSate()),
+          (cntx)=>cntx.unlock()
+        ], {});
     }
 }
 ```
 ## Example: Using
 
 ```javascript
-const mng = new serviceManager()
-mng.eventProcessing('evCheck')   // build in internal content
-mng.eventProcessing('evComplete',new serviceContent('wait')) // external content
+const content  = new serviceContent(fsmLogic);
+const manager  = new serviceManager();
+manager.initLogic();
+
+async function runLoop(trig, cntx, srvmng) {
+    const state = await cntx.eventLoop(trig, srvmng);
+    console.debug(` EvProc[${trig}] => nextState[${state}]:`)
+}
+
+(async (cntx, srvmng) => {
+    await runLoop('evCheck', cntx, srvmng)
+    await runLoop('evReplay', cntx, srvmng)
+    await runLoop('evComplete', cntx, srvmng)
+})(content, manager);
 ```
 
 ## Debug in REPL.it 
